@@ -1,3 +1,3 @@
 export interface IFileStructure {
-  [key: string]: IFileStructure | string | null;
+  [key: string]: IFileStructure | string;
 }

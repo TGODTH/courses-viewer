@@ -4,10 +4,11 @@
     "description": "",
     "main": "server.js",
     "scripts": {
-        "build": "rimraf ./dist/!(public) && npx tsc",
-        "prestart": "npm run build",
+        "build:dev": "rimraf ./dist/!(public) && npx tsc",
+        "build": "esbuild src/server.ts --bundle --platform=node --outfile=dist/server.js",
+        "prestart": "npm run build:dev",
         "start": "node ./dist/server.js",
-        "predev": "npm run build",
+        "predev": "npm run build:dev",
         "dev": "concurrently \"npx tsc -w\" \"npx nodemon ./dist/server.js\""
     },
     "type": "commonjs",
@@ -16,6 +17,7 @@
     "license": "ISC",
     "dependencies": {
         "cors": "^2.8.5",
+        "dotenv": "^16.4.5",
         "express": "^4.19.2",
         "fast-glob": "^3.3.2"
     },
@@ -24,6 +26,7 @@
         "@types/express": "^4.17.21",
         "@types/node": "^20.12.7",
         "concurrently": "^8.2.2",
+        "esbuild": "^0.20.2",
         "nodemon": "^3.1.0",
         "rimraf": "^5.0.5",
         "typescript": "^5.4.5"

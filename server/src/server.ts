@@ -5,20 +5,26 @@ import fg from "fast-glob";
 import { buildFileStructure } from "./utils";
 import cors from "cors";
 import https from "https";
+import "dotenv/config";
 
-const PORT = 3000;
-const cert = "cert/your_domain_name.crt";
-const key = "cert/private.key";
-const ca = "cert/CARootCertificate-ca.crt";
-const videoMainPath = "D:\\Project\\Website\\Work\\SLH\\english-course\\server\\video";
+const PORT = process.env.PORT || 3000;
+const cert = process.env.CERT_PATH || "cert/your_domain_name.crt";
+const key = process.env.KEY_PATH || "cert/private.key";
+const ca = process.env.CA_PATH || "cert/CARootCertificate-ca.crt";
+const fileMainPath =
+  process.env.FILE_MAIN_PATH ||
+  "D:\\Project\\Website\\Work\\SLH\\english-course\\server\\video";
 
 const app = express();
 
 app.use(cors());
 
 app.get("/api/list", async (req, res) => {
+  const excludedFileTypes = process.env.EXCLUDED_FILE_TYPES!;
   try {
-    const files = fg.sync("**/*", { cwd: videoMainPath });
+    const files = fg.sync(["**/*", `!**/*{${excludedFileTypes}}`], {
+      cwd: fileMainPath,
+    });
     const fileStructure = buildFileStructure(files);
     res.send(fileStructure);
   } catch (error) {
@@ -29,7 +35,7 @@ app.get("/api/list", async (req, res) => {
 
 app.get("/api/video/*", (req, res) => {
   const videoPath = path.join(
-    videoMainPath,
+    fileMainPath,
     decodeURIComponent((req.params as { [key: string]: string })["0"])
   );
   const stat = fs.statSync(videoPath);
@@ -61,38 +67,32 @@ app.get("/api/video/*", (req, res) => {
     fs.createReadStream(videoPath).pipe(res);
   }
 });
-app.get("/api/pdf/*", (req, res) => {
-  const videoPath = path.join(
-    videoMainPath,
+app.get("/api/download/*", (req, res) => {
+  const filePath = path.join(
+    fileMainPath,
     decodeURIComponent((req.params as { [key: string]: string })["0"])
   );
 
-  const videoDir = path.dirname(videoPath);
-  const files = fg.sync("*", { cwd: videoDir });
-  const pdfFile = files.find((file) => {
-    const [firstNum] = file.split(".");
-    return (
-      firstNum === videoPath.split("\\").pop()?.split(".")[0] &&
-      file.slice(-4) === ".pdf"
-    );
-  });
-
-  if (!pdfFile) {
-    return res.status(404).send("PDF file not found");
+  if (filePath.toLowerCase().endsWith(".mp4")) {
+    return res.status(404).send("MP4 file not allowed for direct download");
   }
 
-  const pdfPath = path.join(videoDir, pdfFile);
-  const stat = fs.statSync(pdfPath);
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).send("File not found");
+  }
+
+  const stat = fs.statSync(filePath);
   const fileSize = stat.size;
 
   const head = {
     "Content-Length": fileSize,
-    "Content-Type": "application/pdf",
-    "Content-Disposition": `attachment; filename="${pdfFile}"`,
+    "Content-Type": "application/octet-stream",
+    "Content-Disposition": `attachment; filename="${path.basename(filePath)}"`,
   };
+  if (filePath.endsWith(".pdf")) return res.sendFile(filePath);
 
   res.writeHead(200, head);
-  fs.createReadStream(pdfPath).pipe(res);
+  fs.createReadStream(filePath).pipe(res);
 });
 
 app.use(express.static("./public"));
@@ -114,6 +114,7 @@ try {
     console.log(`now listen on port ${PORT}`);
   });
 } catch (error) {
+    console.log("Failed to get HTTPS cert file... Serve as HTTP instead")
   app.listen(PORT, () => {
     console.log(`now listen on port ${PORT}`);
   });

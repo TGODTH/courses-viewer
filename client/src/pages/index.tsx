@@ -9,7 +9,7 @@ const HomePage = () => {
       <Title order={2} mt="sm" lh="md" fw={500} ta="center">
         สารบัญ
       </Title>
-      <NavLinkList list={courseStructure} />
+      <NavLinkList fileStructure ={courseStructure} />
     </Box>
   );
 };

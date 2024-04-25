@@ -10,12 +10,18 @@ import { useDisclosure } from "@mantine/hooks";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import NavLinkList from "../pages/NavLinkList";
 import { useCourseStructure } from "../services/context";
+import { useEffect } from "react";
 
 export const CollapseSidebar = () => {
-  const [mobileOpened, { toggle: toggleMobile }] = useDisclosure();
+  const [mobileOpened, { toggle: toggleMobile, close: closeMobile }] =
+    useDisclosure();
   const [desktopOpened, { toggle: toggleDesktop }] = useDisclosure(true);
   const courseStructure = useCourseStructure();
   const location = useLocation();
+
+  useEffect(() => {
+    closeMobile();
+  }, [location, closeMobile]);
 
   return (
     <AppShell
@@ -48,7 +54,11 @@ export const CollapseSidebar = () => {
               />
             </>
           )}
-          <Link to={"/"} style={{ textDecoration: "none", color: "black" }}>
+          <Link
+            to={"/"}
+            onClick={() => localStorage.setItem("lastPath", "/")}
+            style={{ textDecoration: "none", color: "black" }}
+          >
             <Title order={1} lh="xs">
               English Course
             </Title>
@@ -61,11 +71,11 @@ export const CollapseSidebar = () => {
             สารบัญ
           </Title>
           <ScrollArea offsetScrollbars miw="90%" maw="100%">
-            <NavLinkList list={courseStructure} />
+            <NavLinkList fileStructure={courseStructure} />
           </ScrollArea>
           <AppShell.Section mt="auto">
             <Text fz="12px" opacity="45%" ta="center">
-              created by Thanachart Sangmola
+              webpage created by Thanachart Sangmola
             </Text>
           </AppShell.Section>
         </AppShell.Navbar>

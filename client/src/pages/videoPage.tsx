@@ -1,10 +1,11 @@
-import { useParams } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
 import VideoJS from "../components/video";
 import Player from "video.js/dist/types/player";
-import { Box, Button, Divider, Title } from "@mantine/core";
+import { Box, Title } from "@mantine/core";
 
 const VideoPage = () => {
   const { "*": videoPath } = useParams();
+  const location = useLocation();
 
   const videoJsOptions = {
     autoplay: false,
@@ -18,6 +19,7 @@ const VideoPage = () => {
             ? window.location.origin
             : "http://localhost:3000") +
           "/api/video/" +
+          // TODO: 0?
           encodeURIComponent(videoPath || 0),
         type: "video/mp4",
       },
@@ -33,34 +35,29 @@ const VideoPage = () => {
 
   return (
     <Box mx="auto" maw="1200px" py="md">
-      <Box>
-        <Title order={2} lh="xs">
-          {videoPath?.split("/").pop()?.slice(0, -4)}
-        </Title>
+      <Title order={2} lh="xs">
+        {videoPath?.split("/").pop()?.slice(0, -4)}
+      </Title>
+      {location.pathname.endsWith(".mp4") ? (
         <VideoJS options={videoJsOptions} onReady={handlePlayerReady} />
-
-        <Divider my="md" />
-
-        <Title order={2} lh="xs">
-          เอกสารการเรียน
-        </Title>
-        <Button
-          component="a"
-          href={
+      ) : (
+        <iframe
+          title="Embedded PDF"
+          src={
             (import.meta.env.MODE === "production"
               ? window.location.origin
               : "http://localhost:3000") +
-            "/api/pdf/" +
+            "/api/download/" +
+            // TODO: 0?
             encodeURIComponent(videoPath || 0)
           }
-          download
-          variant="outline"
-          color="blue"
-          mt="md"
-        >
-          ดาวโหลด PDF
-        </Button>
-      </Box>
+          width="100%"
+          style={{
+            height:
+              "calc(100svh - var(--app-shell-header-height) - var(--mantine-spacing-md) - 100px",
+          }}
+        />
+      )}
     </Box>
   );
 };
